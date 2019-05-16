@@ -1,0 +1,43 @@
+Bootstrap: docker
+From: debian:stable
+IncludeCmd: yes
+
+%setup
+
+%post
+	apt update
+	apt install -y build-essential software-properties-common zlib1g-dev libgomp1
+	apt-add-repository contrib
+	apt-add-repository non-free
+	apt update
+	apt upgrade -y
+	apt install -y subversion gawk ghostscript wget fastqc bedtools
+	
+	# install
+	cd /tmp/
+	# glint
+	wget http://lipm-bioinfo.toulouse.inra.fr/download/glint/glint-1.0.rc12.826_833.tgz
+	tar xzf glint-1.0.rc12.826_833.tgz
+	cd glint-1.0.rc12
+	make all
+	make install
+	mv bin/glint /usr/local/bin/
+	cd .. && rm -rf glint-1.0.rc12.826_833 glint-1.0.rc12.826_833.tgz
+	
+	# lipmutils
+	svn checkout http://lipm-svn.toulouse.inra.fr/svn/lipmutils/trunk lipmutils
+	apt install -y liberror-perl liburi-encode-perl libswitch-perl
+	mv lipmutils/bin/* /usr/local/bin/
+	mv lipmutils/corelib /usr/local/lib/
+	rm -rf lipmutils
+	
+	# clean
+	apt purge -y zlib1g-dev subversion wget build-essential
+	apt clean && apt autoremove -y
+
+%environment
+    export LC_ALL=C
+    export PERL5LIB=/usr/local/lib/corelib
+
+%runscript
+	"$@"
